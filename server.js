@@ -3,8 +3,10 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const cors = require("cors");
 const fs = require("fs");
-require("dotenv").config();
 const userList = require("./models/userList");
+
+require("dotenv").config();
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -44,10 +46,8 @@ app.post("/createAccount", async (req, res) => {
       password: hashedPassword,
       createdAt: new Intl.DateTimeFormat("en-GB", options).format(date),
     };
-    if (username) {
-      const result = await userList.create(adduser);
-      res.status(201).json(result);
-    }
+    const result = await userList.create(adduser);
+    res.status(201).json(result);
   } catch (err) {
     res.status(500).json({
       message: "An error occurred while creating the account",
