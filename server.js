@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const cors = require("cors");
-const fs = require("fs");
 const userList = require("./models/userList");
+const authenticateToken = require("./middleware/authenticate");
 
 require("dotenv").config();
 
@@ -21,13 +21,6 @@ mongoose
   })
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
-
-app.get("/protected", async (req, res) => {
-  res.json({
-    message: "You have access to this protected route",
-    user: req.user,
-  });
-});
 
 app.post("/createAccount", async (req, res) => {
   try {
@@ -59,7 +52,6 @@ app.post("/createAccount", async (req, res) => {
 
 app.post("/authLogin", async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const user = await userList.findOne({ username });
     if (!user) {
@@ -81,4 +73,12 @@ app.post("/authLogin", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+app.get("/protected", authenticateToken, (req, res) => {
+  res.json({
+    message: "You have access to this protected route",
+    user: req.user,
+  });
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
