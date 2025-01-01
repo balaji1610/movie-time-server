@@ -3,8 +3,9 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+
 const userList = require("./models/userList");
-const authenticateToken = require("./middleware/authenticate");
 
 require("dotenv").config();
 
@@ -13,6 +14,7 @@ const PORT = process.env.PORT || 5001;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(cors());
+app.use(cookieParser());
 
 mongoose
   .connect(process.env.MONGO_URI, {
@@ -25,6 +27,23 @@ mongoose
 app.get("/", (req, res) => {
   res.send("App is running..");
 });
+
+const authenticateToken = (req, res, next) => {
+  const token = req.cookies.authToken;
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Access denied. No token provided." });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(403).json({ message: "Invalid token." });
+  }
+};
 
 app.post("/createAccount", async (req, res) => {
   try {
@@ -81,6 +100,11 @@ app.post("/authLogin", async (req, res) => {
       process.env.JWT_SECRET
     );
 
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: process.env.JWT_EXPIRES_IN * 1000,
+    });
     res.status(200).json({ message: "Login successful", token });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -92,6 +116,11 @@ app.get("/protected", authenticateToken, (req, res) => {
     message: "You have access to this protected route",
     user: req.user,
   });
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("authToken");
+  res.json({ message: "Logged out successfully" });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
