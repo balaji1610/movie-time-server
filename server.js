@@ -29,6 +29,10 @@ app.get("/", (req, res) => {
 app.post("/createAccount", async (req, res) => {
   try {
     const { username, password } = req.body;
+    const DuplicateUsername = await userList.findOne(
+      { username: username },
+      { __v: 0 }
+    );
     const saltType = 10;
     const hashedPassword = await bcrypt.hash(password, saltType);
     const date = new Date();
@@ -44,8 +48,13 @@ app.post("/createAccount", async (req, res) => {
       password: hashedPassword,
       createdAt: new Intl.DateTimeFormat("en-GB", options).format(date),
     };
-    const result = await userList.create(adduser);
-    res.status(201).json(result);
+
+    if (DuplicateUsername) {
+      res.status(201).json({ message: "User is already registered" });
+    } else {
+      const result = await userList.create(adduser);
+      res.status(201).json(result);
+    }
   } catch (err) {
     res.status(500).json({
       message: "An error occurred while creating the account",
