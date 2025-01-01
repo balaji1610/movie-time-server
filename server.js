@@ -22,6 +22,10 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.log(err));
 
+app.get("/", (req, res) => {
+  res.send("App is running..");
+});
+
 app.post("/createAccount", async (req, res) => {
   try {
     const { username, password } = req.body;
