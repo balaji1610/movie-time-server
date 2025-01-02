@@ -69,7 +69,7 @@ app.post("/createAccount", async (req, res) => {
     };
 
     if (DuplicateUsername) {
-      res.status(201).json({ message: "User is already registered" });
+      res.status(404).json({ message: "User is already registered" });
     } else {
       const result = await userList.create(adduser);
       res.status(201).json(result);
